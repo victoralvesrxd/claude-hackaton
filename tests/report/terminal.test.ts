@@ -49,4 +49,20 @@ describe('renderTerminal', () => {
     expect(stripped).toContain('foo');
     expect(stripped).toContain('a.ts:5');
   });
+
+  it('emits no ANSI escapes when noColor is true', () => {
+    const sampleWithFindings: Report = {
+      ...sample,
+      analysis: {
+        ...sample.analysis,
+        findings: {
+          ...sample.analysis.findings,
+          complexity: [{ file: 'a.ts', line: 5, symbol: 'foo', value: 12, threshold: 10 }],
+        },
+      },
+    };
+    const out = renderTerminal(sampleWithFindings, 10, true);
+    // eslint-disable-next-line no-control-regex
+    expect(out).not.toMatch(/\x1B\[/); // no ANSI escape sequences
+  });
 });

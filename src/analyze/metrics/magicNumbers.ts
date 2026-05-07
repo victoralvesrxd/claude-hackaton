@@ -9,15 +9,16 @@ export function isTestFile(relativePath: string): boolean {
 }
 
 function literalNumericValue(node: Node): number | null {
-  if (node.getKind() === SyntaxKind.NumericLiteral) {
-    return Number(node.getText());
+  const numLit = node.asKind(SyntaxKind.NumericLiteral);
+  if (numLit) {
+    return numLit.getLiteralValue();
   }
   if (node.getKind() === SyntaxKind.PrefixUnaryExpression) {
     const pue = node.asKind(SyntaxKind.PrefixUnaryExpression);
     if (pue && pue.getOperatorToken() === SyntaxKind.MinusToken) {
-      const operand = pue.getOperand();
-      if (operand.getKind() === SyntaxKind.NumericLiteral) {
-        return -Number(operand.getText());
+      const operand = pue.getOperand().asKind(SyntaxKind.NumericLiteral);
+      if (operand) {
+        return -operand.getLiteralValue();
       }
     }
   }

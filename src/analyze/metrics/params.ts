@@ -1,5 +1,6 @@
-import { Node, SourceFile, SyntaxKind } from 'ts-morph';
+import { SourceFile, SyntaxKind } from 'ts-morph';
 import type { Finding } from '../../types.js';
+import { getFunctionName } from './functionName.js';
 
 const FUNCTION_KINDS: SyntaxKind[] = [
   SyntaxKind.FunctionDeclaration,
@@ -8,20 +9,6 @@ const FUNCTION_KINDS: SyntaxKind[] = [
   SyntaxKind.MethodDeclaration,
   SyntaxKind.Constructor,
 ];
-
-function getFunctionName(node: Node): string {
-  if (Node.isFunctionDeclaration(node) || Node.isMethodDeclaration(node)) {
-    return node.getName() ?? '<anonymous>';
-  }
-  if (Node.isConstructorDeclaration(node)) return 'constructor';
-  if (Node.isFunctionExpression(node)) return node.getName() ?? '<function expression>';
-  if (Node.isArrowFunction(node)) {
-    const parent = node.getParent();
-    if (parent && Node.isVariableDeclaration(parent)) return parent.getName();
-    return '<arrow>';
-  }
-  return '<unknown>';
-}
 
 export function analyzeParams(
   sourceFile: SourceFile,

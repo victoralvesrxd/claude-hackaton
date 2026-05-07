@@ -1,4 +1,4 @@
-import { Project, ScriptTarget, SyntaxKind, Node } from 'ts-morph';
+import { Project, ScriptTarget, SourceFile, SyntaxKind, Node } from 'ts-morph';
 import { stat } from 'node:fs/promises';
 import type { ClassifiedFile, Finding, ParseError, SkippedFile, Thresholds } from '../types.js';
 import { analyzeComplexity, calculateComplexity } from './metrics/complexity.js';
@@ -39,6 +39,78 @@ export interface AstAnalysisResult {
   complexityScores: number[];
 }
 
+interface PerFileMetrics {
+  complexity: Finding[];
+  longFunctions: Finding[];
+  deepNesting: Finding[];
+  longParamLists: Finding[];
+  magicNumbers: Finding[];
+  todos: Finding[];
+  fileLength: Finding[];
+  totalFunctions: number;
+  complexityScores: number[];
+}
+
+async function addAnalyzableFiles(
+  project: Project,
+  files: ClassifiedFile[],
+): Promise<{ added: ClassifiedFile[]; parseErrors: ParseError[]; skipped: SkippedFile[] }> {
+  const added: ClassifiedFile[] = [];
+  const parseErrors: ParseError[] = [];
+  const skipped: SkippedFile[] = [];
+  for (const file of files) {
+    if (!file.isAnalyzable) continue;
+    try {
+      const s = await stat(file.absolutePath);
+      if (s.size > MAX_FILE_BYTES) {
+        skipped.push({ file: file.relativePath, reason: 'too-large' });
+        continue;
+      }
+    } catch {
+      skipped.push({ file: file.relativePath, reason: 'unreadable' });
+      continue;
+    }
+    try {
+      project.addSourceFileAtPath(file.absolutePath);
+      added.push(file);
+    } catch (err) {
+      parseErrors.push({
+        file: file.relativePath,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return { added, parseErrors, skipped };
+}
+
+function runPerFileMetrics(
+  sourceFile: SourceFile,
+  rel: string,
+  thresholds: Thresholds,
+): PerFileMetrics {
+  const metrics: PerFileMetrics = {
+    complexity: analyzeComplexity(sourceFile, rel, thresholds.maxComplexity),
+    longFunctions: analyzeFunctionLengths(sourceFile, rel, thresholds.maxFunctionLines),
+    deepNesting: analyzeNesting(sourceFile, rel, thresholds.maxNesting),
+    longParamLists: analyzeParams(sourceFile, rel, thresholds.maxParams),
+    magicNumbers: analyzeMagicNumbers(sourceFile, rel),
+    todos: analyzeTodos(sourceFile, rel),
+    fileLength: analyzeFileLength(sourceFile, rel, thresholds.maxFileLines),
+    totalFunctions: 0,
+    complexityScores: [],
+  };
+
+  // Aggregates: count every function and gather raw complexity scores.
+  sourceFile.forEachDescendant((node: Node) => {
+    if (FUNCTION_KINDS.includes(node.getKind())) {
+      metrics.totalFunctions++;
+      metrics.complexityScores.push(calculateComplexity(node));
+    }
+  });
+
+  return metrics;
+}
+
 export async function runAstAnalysis(
   rootDir: string,
   files: ClassifiedFile[],
@@ -68,62 +140,26 @@ export async function runAstAnalysis(
     skipAddingFilesFromTsConfig: true,
   });
 
-  const analyzableFiles: ClassifiedFile[] = [];
-  for (const file of files) {
-    if (!file.isAnalyzable) continue;
-    try {
-      const s = await stat(file.absolutePath);
-      if (s.size > MAX_FILE_BYTES) {
-        result.skipped.push({ file: file.relativePath, reason: 'too-large' });
-        continue;
-      }
-    } catch {
-      result.skipped.push({ file: file.relativePath, reason: 'unreadable' });
-      continue;
-    }
-    try {
-      project.addSourceFileAtPath(file.absolutePath);
-      analyzableFiles.push(file);
-    } catch (err) {
-      result.parseErrors.push({
-        file: file.relativePath,
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }
+  const { added, parseErrors, skipped } = await addAnalyzableFiles(project, files);
+  result.parseErrors.push(...parseErrors);
+  result.skipped.push(...skipped);
 
-  for (const file of analyzableFiles) {
+  for (const file of added) {
     const sourceFile = project.getSourceFile(file.absolutePath);
     if (!sourceFile) continue;
     const rel = file.relativePath;
 
     try {
-      result.findings.complexity.push(
-        ...analyzeComplexity(sourceFile, rel, thresholds.maxComplexity),
-      );
-      result.findings.longFunctions.push(
-        ...analyzeFunctionLengths(sourceFile, rel, thresholds.maxFunctionLines),
-      );
-      result.findings.deepNesting.push(
-        ...analyzeNesting(sourceFile, rel, thresholds.maxNesting),
-      );
-      result.findings.longParamLists.push(
-        ...analyzeParams(sourceFile, rel, thresholds.maxParams),
-      );
-      result.findings.magicNumbers.push(...analyzeMagicNumbers(sourceFile, rel));
-      result.findings.todos.push(...analyzeTodos(sourceFile, rel));
-      result.findings.fileLength.push(
-        ...analyzeFileLength(sourceFile, rel, thresholds.maxFileLines),
-      );
-
-      // Aggregates: count every function and gather raw complexity scores.
-      sourceFile.forEachDescendant((node: Node) => {
-        if (FUNCTION_KINDS.includes(node.getKind())) {
-          result.totalFunctions++;
-          result.complexityScores.push(calculateComplexity(node));
-        }
-      });
-
+      const metrics = runPerFileMetrics(sourceFile, rel, thresholds);
+      result.findings.complexity.push(...metrics.complexity);
+      result.findings.longFunctions.push(...metrics.longFunctions);
+      result.findings.deepNesting.push(...metrics.deepNesting);
+      result.findings.longParamLists.push(...metrics.longParamLists);
+      result.findings.magicNumbers.push(...metrics.magicNumbers);
+      result.findings.todos.push(...metrics.todos);
+      result.findings.fileLength.push(...metrics.fileLength);
+      result.totalFunctions += metrics.totalFunctions;
+      result.complexityScores.push(...metrics.complexityScores);
       result.filesAnalyzed++;
     } catch (err) {
       result.parseErrors.push({

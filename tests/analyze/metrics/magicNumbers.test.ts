@@ -18,6 +18,14 @@ describe('analyzeMagicNumbers', () => {
     const src = parseSource('const x = 999;', 'a.test.ts');
     expect(analyzeMagicNumbers(src, 'a.test.ts')).toHaveLength(0);
   });
+
+  it('correctly parses literals with underscore separators', () => {
+    const src = parseSource('const SIZE = 1_048_576;', 'a.ts');
+    const findings = analyzeMagicNumbers(src, 'a.ts');
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.value).toBe(1048576);
+    expect(Number.isNaN(findings[0]?.value)).toBe(false);
+  });
 });
 
 describe('isTestFile', () => {

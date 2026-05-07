@@ -4,6 +4,7 @@ import type { DuplicationFinding, Finding, Report } from '../types.js';
 
 export function renderTerminal(report: Report, topN: number, noColor: boolean): string {
   const c = noColor ? makeNoColor() : chalk;
+  const tableStyle = noColor ? { head: [], border: [] } : undefined;
   const out: string[] = [];
 
   out.push(c.bold(c.cyan('═══ cscan report ═══')));
@@ -16,7 +17,7 @@ export function renderTerminal(report: Report, topN: number, noColor: boolean): 
   out.push(`  Total lines: ${report.summary.totalLines}`);
   const langs = Object.entries(report.summary.languages).sort((a, b) => b[1].lines - a[1].lines);
   if (langs.length) {
-    const langTable = new Table({ head: ['Language', 'Files', 'Lines'] });
+    const langTable = new Table({ head: ['Language', 'Files', 'Lines'], style: tableStyle });
     for (const [name, stat] of langs) langTable.push([name, stat.files, stat.lines]);
     out.push(langTable.toString());
   }
@@ -38,26 +39,35 @@ export function renderTerminal(report: Report, topN: number, noColor: boolean): 
   }
   out.push('');
 
-  renderCategory(out, 'Complexity', report.analysis.findings.complexity, topN);
-  renderCategory(out, 'Long functions / files', report.analysis.findings.longFunctions, topN);
-  renderCategory(out, 'Deep nesting', report.analysis.findings.deepNesting, topN);
-  renderCategory(out, 'Long parameter lists', report.analysis.findings.longParamLists, topN);
-  renderCategory(out, 'Magic numbers', report.analysis.findings.magicNumbers, topN);
-  renderCategory(out, 'Unused exports', report.analysis.findings.unusedExports, topN);
-  renderCategory(out, 'TODO/FIXME', report.analysis.findings.todos, topN);
-  renderDuplicates(out, report.analysis.findings.duplicates, topN);
+  renderCategory(out, 'Complexity', report.analysis.findings.complexity, topN, c, tableStyle);
+  renderCategory(out, 'Long functions / files', report.analysis.findings.longFunctions, topN, c, tableStyle);
+  renderCategory(out, 'Deep nesting', report.analysis.findings.deepNesting, topN, c, tableStyle);
+  renderCategory(out, 'Long parameter lists', report.analysis.findings.longParamLists, topN, c, tableStyle);
+  renderCategory(out, 'Magic numbers', report.analysis.findings.magicNumbers, topN, c, tableStyle);
+  renderCategory(out, 'Unused exports', report.analysis.findings.unusedExports, topN, c, tableStyle);
+  renderCategory(out, 'TODO/FIXME', report.analysis.findings.todos, topN, c, tableStyle);
+  renderDuplicates(out, report.analysis.findings.duplicates, topN, c, tableStyle);
 
   return out.join('\n');
 }
 
-function renderCategory(out: string[], title: string, findings: Finding[], topN: number): void {
+type TableStyle = { head: string[]; border: string[] } | undefined;
+
+function renderCategory(
+  out: string[],
+  title: string,
+  findings: Finding[],
+  topN: number,
+  c: typeof chalk,
+  tableStyle: TableStyle,
+): void {
   if (findings.length === 0) return;
   out.push(
-    chalk.bold(title) +
-      chalk.dim(`  (${findings.length} total, showing top ${Math.min(topN, findings.length)})`),
+    c.bold(title) +
+      c.dim(`  (${findings.length} total, showing top ${Math.min(topN, findings.length)})`),
   );
   const sorted = [...findings].sort((a, b) => b.value - a.value).slice(0, topN);
-  const t = new Table({ head: ['File:Line', 'Symbol', 'Value', 'Threshold'] });
+  const t = new Table({ head: ['File:Line', 'Symbol', 'Value', 'Threshold'], style: tableStyle });
   for (const f of sorted) {
     t.push([`${f.file}:${f.line}`, f.symbol ?? '—', String(f.value), String(f.threshold)]);
   }
@@ -65,14 +75,20 @@ function renderCategory(out: string[], title: string, findings: Finding[], topN:
   out.push('');
 }
 
-function renderDuplicates(out: string[], dups: DuplicationFinding[], topN: number): void {
+function renderDuplicates(
+  out: string[],
+  dups: DuplicationFinding[],
+  topN: number,
+  c: typeof chalk,
+  tableStyle: TableStyle,
+): void {
   if (dups.length === 0) return;
   out.push(
-    chalk.bold('Duplicates') +
-      chalk.dim(`  (${dups.length} total, showing top ${Math.min(topN, dups.length)})`),
+    c.bold('Duplicates') +
+      c.dim(`  (${dups.length} total, showing top ${Math.min(topN, dups.length)})`),
   );
   const sorted = [...dups].slice(0, topN);
-  const t = new Table({ head: ['Locations', 'Lines'] });
+  const t = new Table({ head: ['Locations', 'Lines'], style: tableStyle });
   for (const d of sorted) {
     const locs = d.occurrences.map((o) => `${o.file}:${o.startLine}-${o.endLine}`).join('\n');
     const lineCount = d.occurrences[0] ? d.occurrences[0].endLine - d.occurrences[0].startLine + 1 : 0;

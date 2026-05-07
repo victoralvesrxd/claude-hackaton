@@ -1,5 +1,6 @@
 import { Node, SourceFile, SyntaxKind } from 'ts-morph';
 import type { Finding } from '../../types.js';
+import { getFunctionName } from './functionName.js';
 
 const FUNCTION_KINDS: SyntaxKind[] = [
   SyntaxKind.FunctionDeclaration,
@@ -22,22 +23,6 @@ const NESTING_KINDS = new Set<SyntaxKind>([
   SyntaxKind.TryStatement,
   SyntaxKind.CatchClause,
 ]);
-
-function getFunctionName(node: Node): string {
-  if (Node.isFunctionDeclaration(node) || Node.isMethodDeclaration(node)) {
-    return node.getName() ?? '<anonymous>';
-  }
-  if (Node.isConstructorDeclaration(node)) return 'constructor';
-  if (Node.isGetAccessorDeclaration(node)) return `get ${node.getName()}`;
-  if (Node.isSetAccessorDeclaration(node)) return `set ${node.getName()}`;
-  if (Node.isFunctionExpression(node)) return node.getName() ?? '<function expression>';
-  if (Node.isArrowFunction(node)) {
-    const parent = node.getParent();
-    if (parent && Node.isVariableDeclaration(parent)) return parent.getName();
-    return '<arrow>';
-  }
-  return '<unknown>';
-}
 
 function maxDepth(node: Node, current = 0): number {
   let max = current;
