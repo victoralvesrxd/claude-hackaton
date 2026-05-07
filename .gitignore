@@ -4,3 +4,5 @@ coverage/
 *.log
 .DS_Store
 .vitest-cache/
+cscan-report.json
+cscan-report.md
