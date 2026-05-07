@@ -5,7 +5,13 @@ import type { Finding } from '../../types.js';
 export function analyzeUnusedExports(project: Project, rootDir: string): Finding[] {
   const findings: Finding[] = [];
 
-  for (const sourceFile of project.getSourceFiles()) {
+  // With fewer than two source files, no external consumer is even possible,
+  // so the metric is not meaningful — skip to avoid noisy findings on tiny
+  // projects (e.g. a freshly scaffolded package with one entrypoint).
+  const sourceFiles = project.getSourceFiles();
+  if (sourceFiles.length < 2) return findings;
+
+  for (const sourceFile of sourceFiles) {
     const relativeFile = path.relative(rootDir, sourceFile.getFilePath());
     const exportedDeclarations = sourceFile.getExportedDeclarations();
 
