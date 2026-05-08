@@ -5,11 +5,13 @@ import { mergeThresholds } from './config/thresholds.js';
 import { renderTerminal } from './report/terminal.js';
 import { writeJsonReport } from './report/json.js';
 import { writeMarkdownReport } from './report/markdown.js';
+import { writeHtmlReport } from './report/html.js';
 import { ScannerError } from './errors.js';
 
 interface CliOptions {
   json?: string;
   markdown?: string;
+  html?: string;
   maxComplexity?: string;
   maxFunctionLines?: string;
   maxFileLines?: string;
@@ -28,6 +30,7 @@ async function main(): Promise<void> {
     .argument('<directory>', 'directory to scan')
     .option('-j, --json <path>', 'write JSON report to <path>')
     .option('-m, --markdown <path>', 'write Markdown report to <path>')
+    .option('-H, --html <path>', 'write HTML scorecard to <path>')
     .option('--max-complexity <n>', 'cyclomatic complexity threshold per function')
     .option('--max-function-lines <n>', 'max lines per function')
     .option('--max-file-lines <n>', 'max lines per file')
@@ -52,6 +55,7 @@ async function main(): Promise<void> {
 
       if (options.json) await writeJsonReport(report, options.json);
       if (options.markdown) await writeMarkdownReport(report, options.markdown, topN);
+      if (options.html) await writeHtmlReport(report, options.html);
 
       if (options.verbose && report.meta.skipped.length) {
         for (const s of report.meta.skipped) {

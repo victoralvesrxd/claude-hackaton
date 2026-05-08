@@ -6,4 +6,5 @@ coverage/
 .vitest-cache/
 cscan-report.json
 cscan-report.md
+code-quality.html
 .claude/worktrees/
