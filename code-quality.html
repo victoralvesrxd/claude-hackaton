@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cscan — Code Quality Scorecard · Baa2</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --bg: #0e1424;
+        --bg-2: #161e36;
+        --card: #1c2645;
+        --card-2: #1f2a4d;
+        --line: #2a365e;
+        --text: #e8ecf6;
+        --muted: #8893b3;
+        --accent: #d6b04a;
+        --accent-2: #f0cc6e;
+        --good: #4ec9a8;
+        --watch: #e0a93b;
+        --action: #e36a55;
+        --aaa: #4ec9a8;
+        --a: #6cb6d6;
+        --baa: #d6b04a;
+        --ba: #e36a55;
+      }
+
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: radial-gradient(circle at 20% 10%, #1a2444 0%, var(--bg) 60%);
+        background-attachment: fixed;
+        color: var(--text);
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+        min-height: 100vh;
+      }
+      body { -webkit-font-smoothing: antialiased; }
+
+      .top {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 28px 32px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .top .brand {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .top .actions { display: flex; gap: 10px; }
+      .icon-btn {
+        background: var(--card);
+        border: 1px solid var(--line);
+        color: var(--text);
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        letter-spacing: 0.04em;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .icon-btn:hover {
+        background: var(--card-2);
+        border-color: var(--accent);
+      }
+
+      .container {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 24px 32px 64px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 18px;
+      }
+
+      .hero {
+        grid-column: span 12;
+        background:
+          linear-gradient(135deg, rgba(214, 176, 74, 0.08), rgba(255,255,255,0.0) 70%),
+          var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 32px 36px;
+        display: grid;
+        grid-template-columns: 200px 1fr auto;
+        gap: 32px;
+        align-items: center;
+      }
+      .hero .badge {
+        width: 168px;
+        height: 168px;
+        border-radius: 50%;
+        background:
+          conic-gradient(from 220deg, var(--baa) 0%, var(--accent-2) 70%, var(--baa) 100%),
+          var(--card-2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 16px 50px rgba(0,0,0,0.45);
+      }
+      .hero .badge::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 50%;
+        background: var(--bg-2);
+      }
+      .hero .badge .tier-text {
+        position: relative;
+        font-size: 56px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        color: var(--accent-2);
+      }
+      .hero .badge .tier-sub {
+        position: relative;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .hero h1 {
+        font-size: 28px;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+      }
+      .hero .verdict {
+        color: var(--muted);
+        margin: 0;
+        font-size: 16px;
+        max-width: 540px;
+      }
+      .hero .top-numbers {
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        gap: 10px 28px;
+        font-size: 13px;
+        align-self: center;
+      }
+      .hero .top-numbers .v {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
+      .hero .top-numbers .k {
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+
+      .chart-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 22px 24px;
+        display: flex;
+        flex-direction: column;
+      }
+      .chart-card.donut { grid-column: span 5; }
+      .chart-card.radar { grid-column: span 7; }
+      .chart-card h3 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+      .chart-card .sub {
+        margin: 0 0 16px;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .chart-wrap {
+        flex: 1;
+        position: relative;
+        min-height: 260px;
+      }
+
+      .cards-title {
+        grid-column: span 12;
+        margin: 14px 0 0;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+      }
+
+      .cat-card {
+        grid-column: span 3;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px 20px;
+        cursor: pointer;
+        transition: transform 0.15s, border-color 0.15s, background 0.15s;
+        position: relative;
+      }
+      .cat-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+        background: var(--card-2);
+      }
+      .cat-card .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .cat-card .name {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .cat-card .sub-label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        margin-top: 2px;
+      }
+      .pill {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 999px;
+        letter-spacing: 0.06em;
+        line-height: 1.3;
+      }
+      .pill.t-aaa { background: rgba(78, 201, 168, 0.15); color: var(--aaa); }
+      .pill.t-a { background: rgba(108, 182, 214, 0.15); color: var(--a); }
+      .pill.t-baa { background: rgba(214, 176, 74, 0.18); color: var(--baa); }
+      .pill.t-ba { background: rgba(227, 106, 85, 0.18); color: var(--ba); }
+
+      .cat-card .headline {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        margin: 4px 0 4px;
+      }
+      .cat-card .headline-sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      .cat-card .progress {
+        height: 6px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+      .cat-card .progress > span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+      }
+      .cat-card .progress.s-good > span { background: var(--good); }
+      .cat-card .progress.s-watch > span { background: var(--watch); }
+      .cat-card .progress.s-action > span { background: var(--action); }
+
+      .cat-card .toggle {
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .cat-card .detail {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px dashed var(--line);
+        font-size: 13px;
+        color: var(--text);
+        display: none;
+      }
+      .cat-card.expanded .detail { display: block; }
+      .cat-card.expanded .toggle::after { content: " — close"; }
+      .cat-card .detail .why {
+        color: var(--muted);
+        margin-bottom: 10px;
+        font-size: 12px;
+      }
+      .cat-card .detail .offender {
+        font-family: "JetBrains Mono", "Fira Code", Menlo, monospace;
+        font-size: 11px;
+        color: var(--accent-2);
+        padding: 4px 0;
+        border-bottom: 1px dotted var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .cat-card .detail .offender:last-child { border-bottom: 0; }
+      .cat-card .detail .offender .v { color: var(--muted); }
+
+      footer.bottom {
+        max-width: 1320px;
+        margin: 32px auto 0;
+        padding: 0 32px 32px;
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        letter-spacing: 0.06em;
+      }
+
+      /* Slide-in panel */
+      .panel-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 12, 24, 0.65);
+        backdrop-filter: blur(2px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        z-index: 40;
+      }
+      .panel-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: min(560px, 92vw);
+        background: var(--bg-2);
+        border-left: 1px solid var(--line);
+        box-shadow: -16px 0 40px rgba(0,0,0,0.4);
+        transform: translateX(100%);
+        transition: transform 0.25s ease-out;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+      }
+      .panel.open { transform: translateX(0); }
+      .panel header {
+        padding: 22px 28px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .panel header h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .panel header button {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px 12px;
+        border-radius: 6px;
+        line-height: 1;
+      }
+      .panel header button:hover { border-color: var(--accent); }
+      .panel .body {
+        padding: 22px 28px;
+        overflow-y: auto;
+        flex: 1;
+        font-size: 14px;
+      }
+      .panel .body h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        margin: 22px 0 10px;
+      }
+      .panel .body h3:first-child { margin-top: 0; }
+      .panel .body dl {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 6px 14px;
+        margin: 0;
+      }
+      .panel .body dt {
+        font-weight: 600;
+        color: var(--accent-2);
+      }
+      .panel .body dd {
+        margin: 0;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .panel .body p {
+        margin: 0 0 12px;
+        color: var(--text);
+      }
+      .panel .body table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .panel .body th, .panel .body td {
+        text-align: left;
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .panel .body th {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .hero { grid-template-columns: 1fr; gap: 16px; text-align: center; }
+        .hero .badge { margin: 0 auto; }
+        .hero .top-numbers { grid-template-columns: repeat(4, auto); justify-content: center; }
+        .chart-card.donut, .chart-card.radar { grid-column: span 12; }
+        .cat-card { grid-column: span 6; }
+      }
+      @media (max-width: 640px) {
+        .grid { gap: 14px; }
+        .container { padding: 16px 18px 48px; }
+        .hero .top-numbers { grid-template-columns: repeat(2, auto); }
+        .cat-card { grid-column: span 12; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <div class="brand">cscan · code-quality scorecard</div>
+      <div class="actions">
+        <button class="icon-btn" data-open="methodology">Methodology</button>
+        <button class="icon-btn" data-open="glossary">Glossary</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="grid">
+        <section class="hero">
+          <div class="badge" aria-label="Overall rating Baa2">
+            <div class="tier-text">Baa2</div>
+            <div class="tier-sub">Medium grade</div>
+          </div>
+          <div>
+            <h1>cscan — TypeScript Code Scanner</h1>
+            <p class="verdict">
+              Investment grade with visible deferred maintenance. Fundamentals
+              are sound; pressure points sit in duplication, magic numbers, and
+              unused exports.
+            </p>
+          </div>
+          <div class="top-numbers">
+            <div>
+              <div class="k">Files</div>
+              <div class="v">23</div>
+            </div>
+            <div>
+              <div class="k">Lines</div>
+              <div class="v">1,383</div>
+            </div>
+            <div>
+              <div class="k">Functions</div>
+              <div class="v">68</div>
+            </div>
+            <div>
+              <div class="k">Findings</div>
+              <div class="v">42</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="chart-card donut">
+          <h3>Findings by Category</h3>
+          <p class="sub">Where the 42 raised findings are concentrated</p>
+          <div class="chart-wrap"><canvas id="donut"></canvas></div>
+        </section>
+
+        <section class="chart-card radar">
+          <h3>Category Health Profile</h3>
+          <p class="sub">Higher = healthier · 0–100 sub-score per dimension</p>
+          <div class="chart-wrap"><canvas id="radar"></canvas></div>
+        </section>
+
+        <h2 class="cards-title">Sub-ratings · click any card to drill in</h2>
+
+        <article class="cat-card" data-cat="complexity">
+          <div class="header">
+            <div>
+              <p class="name">Cyclomatic Complexity</p>
+              <div class="sub-label">Decision branches per function</div>
+            </div>
+            <span class="pill t-a">A2</span>
+          </div>
+          <div class="headline">1</div>
+          <div class="headline-sub">function over threshold</div>
+          <div class="progress s-good"><span style="width: 22%;"></span></div>
+          <div class="toggle">Top offender</div>
+          <div class="detail">
+            <div class="why">More decision branches means more execution paths to test and more places a bug can hide.</div>
+            <div class="offender"><span><code>analyze/metrics/functionName.ts:3</code> getFunctionName</span><span class="v">12 / 10</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="longFunctions">
+          <div class="header">
+            <div>
+              <p class="name">Long Functions</p>
+              <div class="sub-label">Body length over 50 lines</div>
+            </div>
+            <span class="pill t-baa">Baa3</span>
+          </div>
+          <div class="headline">4</div>
+          <div class="headline-sub">over threshold (50 lines)</div>
+          <div class="progress s-watch"><span style="width: 62%;"></span></div>
+          <div class="toggle">Top 3 offenders</div>
+          <div class="detail">
+            <div class="why">Long functions tend to mix concerns and resist isolated review.</div>
+            <div class="offender"><span><code>pipeline.ts:12</code> runPipeline</span><span class="v">69 lines</span></div>
+            <div class="offender"><span><code>analyze/ast.ts:114</code> runAstAnalysis</span><span class="v">68 lines</span></div>
+            <div class="offender"><span><code>aggregate/buildReport.ts:39</code> buildReport</span><span class="v">55 lines</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="deepNesting">
+          <div class="header">
+            <div>
+              <p class="name">Deep Nesting</p>
+              <div class="sub-label">Nested logic over 4 levels</div>
+            </div>
+            <span class="pill t-a">A2</span>
+          </div>
+          <div class="headline">1</div>
+          <div class="headline-sub">over threshold (4 levels)</div>
+          <div class="progress s-good"><span style="width: 22%;"></span></div>
+          <div class="toggle">Top offender</div>
+          <div class="detail">
+            <div class="why">Each extra level multiplies the mental effort required to follow the logic.</div>
+            <div class="offender"><span><code>analyze/metrics/unusedExports.ts:5</code> analyzeUnusedExports</span><span class="v">5 / 4</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="longParamLists">
+          <div class="header">
+            <div>
+              <p class="name">Long Param Lists</p>
+              <div class="sub-label">More than 4 arguments</div>
+            </div>
+            <span class="pill t-a">A3</span>
+          </div>
+          <div class="headline">2</div>
+          <div class="headline-sub">over threshold (4 params)</div>
+          <div class="progress s-good"><span style="width: 30%;"></span></div>
+          <div class="toggle">Top offenders</div>
+          <div class="detail">
+            <div class="why">Many parameters often signal that a function is doing too many jobs.</div>
+            <div class="offender"><span><code>report/terminal.ts:56</code> renderCategory</span><span class="v">6 params</span></div>
+            <div class="offender"><span><code>report/terminal.ts:78</code> renderDuplicates</span><span class="v">5 params</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="magicNumbers">
+          <div class="header">
+            <div>
+              <p class="name">Magic Numbers</p>
+              <div class="sub-label">Unnamed numeric literals</div>
+            </div>
+            <span class="pill t-baa">Baa2</span>
+          </div>
+          <div class="headline">13</div>
+          <div class="headline-sub">findings across config &amp; logic</div>
+          <div class="progress s-watch"><span style="width: 56%;"></span></div>
+          <div class="toggle">Top offenders</div>
+          <div class="detail">
+            <div class="why">Anonymous constants make the intent of code unclear and changes risky.</div>
+            <div class="offender"><span><code>config/thresholds.ts:4–8</code></span><span class="v">5 default thresholds</span></div>
+            <div class="offender"><span><code>classify/countLines.ts:4</code></span><span class="v">8192 buffer size</span></div>
+            <div class="offender"><span><code>analyze/duplication.ts:60–61</code></span><span class="v">jscpd tuning (50, 5)</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="duplicates">
+          <div class="header">
+            <div>
+              <p class="name">Code Duplication</p>
+              <div class="sub-label">Repeated logic across files</div>
+            </div>
+            <span class="pill t-baa">Baa1</span>
+          </div>
+          <div class="headline">7</div>
+          <div class="headline-sub">duplicated blocks detected</div>
+          <div class="progress s-watch"><span style="width: 50%;"></span></div>
+          <div class="toggle">Top clusters</div>
+          <div class="detail">
+            <div class="why">Duplicated logic must be fixed in many places when it changes — a steady tax.</div>
+            <div class="offender"><span><code>analyze/metrics/nesting.ts</code> ↔ <code>analyze/metrics/params.ts</code></span><span class="v">imports + helper</span></div>
+            <div class="offender"><span><code>analyze/metrics/length.ts</code> ↔ <code>analyze/metrics/params.ts</code></span><span class="v">two clusters</span></div>
+            <div class="offender"><span><code>aggregate/buildReport.ts</code> ↔ <code>analyze/ast.ts</code></span><span class="v">type assembly</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="unusedExports">
+          <div class="header">
+            <div>
+              <p class="name">Unused Exports</p>
+              <div class="sub-label">Public API never consumed</div>
+            </div>
+            <span class="pill t-ba">Ba1</span>
+          </div>
+          <div class="headline">14</div>
+          <div class="headline-sub">declared but unused</div>
+          <div class="progress s-action"><span style="width: 72%;"></span></div>
+          <div class="toggle">Top offenders</div>
+          <div class="detail">
+            <div class="why">Unused exports widen the surface area maintainers must reason about.</div>
+            <div class="offender"><span><code>types.ts</code></span><span class="v">5 type aliases</span></div>
+            <div class="offender"><span><code>errors.ts:1</code> ErrorKind</span><span class="v">type</span></div>
+            <div class="offender"><span><code>config/thresholds.ts:3</code> DEFAULT_THRESHOLDS</span><span class="v">const</span></div>
+          </div>
+        </article>
+
+        <article class="cat-card" data-cat="todos">
+          <div class="header">
+            <div>
+              <p class="name">TODO Backlog</p>
+              <div class="sub-label">TODO / FIXME / HACK markers</div>
+            </div>
+            <span class="pill t-aaa">Aaa</span>
+          </div>
+          <div class="headline">0</div>
+          <div class="headline-sub">unresolved markers</div>
+          <div class="progress s-good"><span style="width: 6%;"></span></div>
+          <div class="toggle">Why this matters</div>
+          <div class="detail">
+            <div class="why">Acknowledged but unresolved work hidden inside the source — a leading indicator of deferred quality work.</div>
+            <div class="offender"><span>No findings</span><span class="v">—</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <footer class="bottom">
+      <div>cscan v0.1.0 · scanned 2026-05-07 · 996 ms</div>
+      <div>Internal evaluation only · not investment advice</div>
+    </footer>
+
+    <div class="panel-backdrop" id="backdrop"></div>
+
+    <aside class="panel" id="panel-glossary" aria-hidden="true">
+      <header>
+        <h2>Glossary</h2>
+        <button data-close aria-label="Close glossary">×</button>
+      </header>
+      <div class="body">
+        <h3>Rating tiers</h3>
+        <dl>
+          <dt>Aaa</dt><dd>Exemplary. Minimal maintenance risk; near-zero findings across all categories.</dd>
+          <dt>Aa1</dt><dd>High quality. Very low risk; isolated trivial issues.</dd>
+          <dt>Aa2</dt><dd>High quality. Very low risk; minor isolated findings.</dd>
+          <dt>Aa3</dt><dd>High quality. Low risk; small clusters of low-severity findings.</dd>
+          <dt>A1</dt><dd>Upper-medium grade. Low risk; sound code with limited friction.</dd>
+          <dt>A2</dt><dd>Upper-medium grade. Sound code with friction in one or two areas.</dd>
+          <dt>A3</dt><dd>Upper-medium grade. Sound but with noticeable friction emerging.</dd>
+          <dt>Baa1</dt><dd>Medium grade. Acceptable risk; some maintenance cost is being deferred.</dd>
+          <dt>Baa2</dt><dd>Medium grade. Acceptable risk; deferred maintenance is visible but bounded.</dd>
+          <dt>Baa3</dt><dd>Lowest investment grade. Acceptable but close to speculative; rework warranted.</dd>
+          <dt>Ba1</dt><dd>Speculative. Substantial maintenance risk; refactor priorities should be set.</dd>
+          <dt>Ba2</dt><dd>Speculative. Substantial risk; quality erosion compounds without intervention.</dd>
+          <dt>Ba3</dt><dd>Speculative. Substantial risk; meaningful rework needed before scaling further.</dd>
+          <dt>B1</dt><dd>High risk. Costly to evolve safely; defects likely under change pressure.</dd>
+          <dt>B2</dt><dd>High risk. Refactor effort competes with feature work.</dd>
+          <dt>B3</dt><dd>High risk. Each change carries high regression probability.</dd>
+          <dt>Caa1</dt><dd>Poor standing. Significant rework required before further investment.</dd>
+          <dt>Caa2</dt><dd>Poor standing. Structural redesign of weak areas likely needed.</dd>
+          <dt>Caa3</dt><dd>Poor standing. Compounding defects; rewrite candidates emerging.</dd>
+          <dt>Ca</dt><dd>Severe. Near-failure; effective refactor or replacement is overdue.</dd>
+          <dt>C</dt><dd>Critical. Code is effectively unmaintainable in its current form.</dd>
+        </dl>
+
+        <h3>Analysis categories</h3>
+        <dl>
+          <dt>Complexity</dt><dd>Cyclomatic complexity — the number of decision branches inside a single function.</dd>
+          <dt>Long Funcs</dt><dd>Functions whose body length exceeds the configured maximum.</dd>
+          <dt>Nesting</dt><dd>Conditionals or loops nested beyond four levels deep.</dd>
+          <dt>Long Params</dt><dd>Functions taking more than four arguments.</dd>
+          <dt>Magic Nums</dt><dd>Unnamed numeric literals embedded in business logic.</dd>
+          <dt>Duplication</dt><dd>Stretches of code repeated across files.</dd>
+          <dt>Unused Exp</dt><dd>Public symbols declared but never imported elsewhere.</dd>
+          <dt>TODOs</dt><dd>Comments tagged TODO, FIXME, HACK or XXX.</dd>
+          <dt>Threshold</dt><dd>Maximum acceptable value for a metric before a finding is raised.</dd>
+          <dt>KLOC</dt><dd>Thousand lines of code — used to normalise findings by codebase size.</dd>
+        </dl>
+      </div>
+    </aside>
+
+    <aside class="panel" id="panel-methodology" aria-hidden="true">
+      <header>
+        <h2>Methodology</h2>
+        <button data-close aria-label="Close methodology">×</button>
+      </header>
+      <div class="body">
+        <p>
+          The overall rating is a weighted composite of eight code-health
+          categories. Each category is scored 0–100 (higher is healthier) by
+          normalising violations to the size of the codebase and bucketing into
+          Moody's tiers.
+        </p>
+
+        <h3>Weights &amp; sub-ratings</h3>
+        <table>
+          <thead>
+            <tr><th>Category</th><th>Weight</th><th>Score</th><th>Tier</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Complexity</td><td>25%</td><td>85</td><td>A2</td></tr>
+            <tr><td>Duplication</td><td>20%</td><td>65</td><td>Baa1</td></tr>
+            <tr><td>Long Functions</td><td>15%</td><td>55</td><td>Baa3</td></tr>
+            <tr><td>Deep Nesting</td><td>10%</td><td>85</td><td>A2</td></tr>
+            <tr><td>Long Params</td><td>10%</td><td>80</td><td>A3</td></tr>
+            <tr><td>Magic Numbers</td><td>10%</td><td>60</td><td>Baa2</td></tr>
+            <tr><td>Unused Exports</td><td>5%</td><td>45</td><td>Ba1</td></tr>
+            <tr><td>TODOs</td><td>5%</td><td>100</td><td>Aaa</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Composite</h3>
+        <p>
+          Weighted total: <b>71 / 100</b> · investment-grade tiers (Aaa
+          through Baa3) cover scores 50 and above; speculative-grade (Ba1
+          and below) cover 49 and under. A score of 71 lands in the
+          medium-grade band — <b>Baa2</b>.
+        </p>
+        <p>
+          The mapping is deterministic and reproducible: re-running cscan on
+          the same scope produces the same report.json input, which feeds the
+          same scoring formula.
+        </p>
+      </div>
+    </aside>
+
+    <script>
+      // Chart data
+      const violationData = {
+        labels: ["Magic Nums", "Unused Exp", "Duplication", "Long Funcs", "Long Params", "Complexity", "Nesting", "TODOs"],
+        values: [13, 14, 7, 4, 2, 1, 1, 0],
+        colors: ["#d6b04a", "#e36a55", "#b78747", "#e0a93b", "#a3915b", "#6cb6d6", "#7fb8a3", "#4ec9a8"],
+      };
+
+      const radarLabels = ["Complexity", "Duplication", "Long Funcs", "Nesting", "Long Params", "Magic Nums", "Unused Exp", "TODOs"];
+      const radarScores = [85, 65, 55, 85, 80, 60, 45, 100];
+
+      const accent = "#d6b04a";
+      const text = "#e8ecf6";
+      const muted = "#8893b3";
+
+      Chart.defaults.color = muted;
+      Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+
+      // Doughnut
+      new Chart(document.getElementById("donut"), {
+        type: "doughnut",
+        data: {
+          labels: violationData.labels,
+          datasets: [{
+            data: violationData.values,
+            backgroundColor: violationData.colors,
+            borderColor: "#1c2645",
+            borderWidth: 2,
+            hoverOffset: 8,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "62%",
+          plugins: {
+            legend: {
+              position: "right",
+              labels: { color: text, boxWidth: 10, padding: 10, font: { size: 12 } },
+            },
+            tooltip: {
+              backgroundColor: "#0e1424",
+              borderColor: "#2a365e",
+              borderWidth: 1,
+              titleColor: text,
+              bodyColor: text,
+              callbacks: {
+                label: (ctx) => `${ctx.label}: ${ctx.parsed} finding${ctx.parsed === 1 ? "" : "s"}`,
+              },
+            },
+          },
+        },
+      });
+
+      // Radar
+      new Chart(document.getElementById("radar"), {
+        type: "radar",
+        data: {
+          labels: radarLabels,
+          datasets: [{
+            label: "Health score",
+            data: radarScores,
+            fill: true,
+            backgroundColor: "rgba(214, 176, 74, 0.18)",
+            borderColor: accent,
+            borderWidth: 2,
+            pointBackgroundColor: accent,
+            pointBorderColor: "#0e1424",
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#0e1424",
+              borderColor: "#2a365e",
+              borderWidth: 1,
+              callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed.r} / 100` },
+            },
+          },
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 100,
+              ticks: { color: muted, backdropColor: "transparent", stepSize: 25 },
+              grid: { color: "rgba(255,255,255,0.08)" },
+              angleLines: { color: "rgba(255,255,255,0.08)" },
+              pointLabels: { color: text, font: { size: 12 } },
+            },
+          },
+        },
+      });
+
+      // Card expand/collapse
+      document.querySelectorAll(".cat-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          card.classList.toggle("expanded");
+        });
+      });
+
+      // Slide-in panels
+      const backdrop = document.getElementById("backdrop");
+      const panels = {
+        glossary: document.getElementById("panel-glossary"),
+        methodology: document.getElementById("panel-methodology"),
+      };
+
+      function openPanel(name) {
+        Object.values(panels).forEach((p) => {
+          p.classList.remove("open");
+          p.setAttribute("aria-hidden", "true");
+        });
+        const target = panels[name];
+        if (!target) return;
+        target.classList.add("open");
+        target.setAttribute("aria-hidden", "false");
+        backdrop.classList.add("open");
+      }
+      function closePanels() {
+        Object.values(panels).forEach((p) => {
+          p.classList.remove("open");
+          p.setAttribute("aria-hidden", "true");
+        });
+        backdrop.classList.remove("open");
+      }
+
+      document.querySelectorAll("[data-open]").forEach((btn) => {
+        btn.addEventListener("click", () => openPanel(btn.dataset.open));
+      });
+      document.querySelectorAll("[data-close]").forEach((btn) => {
+        btn.addEventListener("click", closePanels);
+      });
+      backdrop.addEventListener("click", closePanels);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closePanels();
+      });
+    </script>
+  </body>
+</html>
