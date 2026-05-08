@@ -14,7 +14,7 @@ This format applies to every commit, including small ones. No exceptions.
 ### Example
 
 ```
-Add cscan design document
+Add Code Ratings design document
 
 Why:
 Establishes the architecture and scope for the code scanner CLI before
@@ -45,7 +45,7 @@ a premature abstraction.
 
 ## Dogfood before declaring done
 
-Before reporting a feature or refactor as finished, run `cscan` on `src/`
-(`npm run build && node dist/cli.js src`) and confirm the report is clean for
-the area you touched. The scanner's own findings are the fastest signal that
+Before reporting a feature or refactor as finished, run Code Ratings on
+`src/` (`npm run scan:self`) and confirm the report is clean for the area
+you touched. The scanner's own findings are the fastest signal that
 something regressed.

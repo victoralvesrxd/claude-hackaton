@@ -9,7 +9,7 @@ describe('runAstAnalysis', () => {
   let root: string;
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-ast-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-ast-'));
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });

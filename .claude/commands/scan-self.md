@@ -1,8 +1,8 @@
 ---
-description: Run cscan on its own src/, then triage findings against thresholds
+description: Run Code Ratings on its own src/, then triage findings against thresholds
 ---
 
-You are running the cscan dogfood feedback loop. Steps:
+You are running the Code Ratings dogfood feedback loop. Steps:
 
 1. From the repo root, run the self-scan:
 
@@ -10,11 +10,11 @@ You are running the cscan dogfood feedback loop. Steps:
    npm run scan:self
    ```
 
-   This produces `cscan-report.json` and `cscan-report.md` at the repo root and
+   This produces `code-ratings-report.json` and `code-ratings-report.md` at the repo root and
    prints a terminal summary. If the build hasn't happened yet, `tsx` runs the
    TS sources directly so no build step is needed.
 
-2. Read `cscan-report.md` and summarise the violation counts by category
+2. Read `code-ratings-report.md` and summarise the violation counts by category
    (complexity, longFunctions, deepNesting, longParamLists, magicNumbers,
    unusedExports, todos, duplicates).
 

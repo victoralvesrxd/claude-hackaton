@@ -8,7 +8,7 @@ describe('countLines', () => {
   let root: string;
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-lines-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-lines-'));
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });
@@ -36,7 +36,7 @@ describe('countLines', () => {
 describe('isBinary', () => {
   let root: string;
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-bin-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-bin-'));
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });

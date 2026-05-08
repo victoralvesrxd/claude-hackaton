@@ -7,7 +7,7 @@ export function renderTerminal(report: Report, topN: number, noColor: boolean): 
   const tableStyle = noColor ? { head: [], border: [] } : undefined;
   const out: string[] = [];
 
-  out.push(c.bold(c.cyan('═══ cscan report ═══')));
+  out.push(c.bold(c.cyan('═══ Code Ratings ═══')));
   out.push(`Target: ${report.meta.target}`);
   out.push(`Scanned at: ${report.meta.scannedAt}  (${report.meta.durationMs} ms)`);
   out.push('');

@@ -30,7 +30,7 @@ const fakeReport: Report = {
 describe('writeJsonReport', () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'cscan-json-'));
+    dir = await mkdtemp(path.join(tmpdir(), 'code-ratings-json-'));
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });

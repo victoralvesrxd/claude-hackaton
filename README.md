@@ -1,4 +1,4 @@
-# cscan
+# Code Ratings
 
 A TypeScript-native code scanner CLI. Walks a codebase, classifies files,
 runs AST-driven quality analysis on TypeScript / JavaScript sources, and
@@ -6,10 +6,9 @@ emits a leadership-readable scorecard graded on Moody's long-term rating
 scale (Aaa–C) adapted to code quality.
 
 ```
-$ npx cscan src
+$ npx code-ratings src
 
-  cscan summary
-  -------------
+  ═══ Code Ratings ═══
   Total files:      24    Total lines:    2,057
   Total functions:  106   Avg complexity: 3.06
 
@@ -21,7 +20,7 @@ $ npx cscan src
 
 Static analysis output is usually written for engineers — long tables of
 findings, threshold values, file paths. Leadership needs a different
-view: one number, one paragraph, and the option to drill in. cscan keeps
+view: one number, one paragraph, and the option to drill in. Code Ratings keeps
 the engineer-friendly outputs (terminal table, JSON, Markdown) and adds
 an HTML scorecard styled as a Moody's-style rating action so a manager
 can read the codebase in 30 seconds.
@@ -39,12 +38,12 @@ npm run build      # optional — tsx runs the sources directly
 
 ```bash
 # scan a directory, print to terminal only
-npx cscan path/to/src
+npx code-ratings path/to/src
 
 # emit all four output formats
-npx cscan src \
-  --json    cscan-report.json \
-  --markdown cscan-report.md \
+npx code-ratings src \
+  --json    code-ratings-report.json \
+  --markdown code-ratings-report.md \
   --html    code-quality.html
 ```
 
@@ -73,7 +72,7 @@ npx cscan src \
 
 ## Output
 
-cscan always prints a terminal summary. Each `--*` flag enables an
+Code Ratings always prints a terminal summary. Each `--*` flag enables an
 additional format. The four outputs share the same in-memory `Report`
 shape, so they stay consistent with each other.
 

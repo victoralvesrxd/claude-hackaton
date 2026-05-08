@@ -35,7 +35,7 @@ const sample: Report = {
 describe('writeMarkdownReport', () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'cscan-md-'));
+    dir = await mkdtemp(path.join(tmpdir(), 'code-ratings-md-'));
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -45,7 +45,7 @@ describe('writeMarkdownReport', () => {
     const out = path.join(dir, 'report.md');
     await writeMarkdownReport(sample, out, 10);
     const text = await readFile(out, 'utf8');
-    expect(text).toContain('# cscan report');
+    expect(text).toContain('# Code Ratings report');
     expect(text).toContain('| TypeScript | 2 | 50 |');
     expect(text).toContain('| a.ts:1 | big | 12 | 10 |');
   });

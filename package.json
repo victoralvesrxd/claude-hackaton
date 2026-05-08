@@ -1,10 +1,10 @@
 {
-  "name": "cscan",
+  "name": "code-ratings",
   "version": "0.1.0",
-  "description": "Code scanner CLI: walks a codebase, extracts metrics, surfaces quality issues",
+  "description": "Code Ratings: walks a codebase, extracts metrics, grades quality on a Moody's-style scale",
   "type": "module",
   "bin": {
-    "cscan": "./dist/cli.js"
+    "code-ratings": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "scan:self": "node --import tsx src/cli.ts src --json cscan-report.json --markdown cscan-report.md --html code-quality.html"
+    "scan:self": "node --import tsx src/cli.ts src --json code-ratings-report.json --markdown code-ratings-report.md --html code-quality.html"
   },
   "engines": {
     "node": ">=20"

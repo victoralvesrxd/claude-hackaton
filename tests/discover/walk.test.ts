@@ -8,7 +8,7 @@ describe('walkDirectory', () => {
   let root: string;
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-walk-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-walk-'));
   });
 
   afterEach(async () => {

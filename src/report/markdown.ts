@@ -8,7 +8,7 @@ export async function writeMarkdownReport(report: Report, outPath: string, topN:
 
 export function renderMarkdown(report: Report, topN: number): string {
   const out: string[] = [];
-  out.push('# cscan report');
+  out.push('# Code Ratings report');
   out.push('');
   out.push(`**Target:** \`${report.meta.target}\``);
   out.push(`**Scanned at:** ${report.meta.scannedAt} (${report.meta.durationMs} ms)`);

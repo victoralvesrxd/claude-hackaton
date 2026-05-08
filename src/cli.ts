@@ -24,8 +24,8 @@ interface CliOptions {
 async function main(): Promise<void> {
   const program = new Command();
   program
-    .name('cscan')
-    .description('Code scanner CLI — walks a codebase, extracts metrics, surfaces quality issues')
+    .name('code-ratings')
+    .description('Code Ratings — walks a codebase, extracts metrics, grades quality on a Moody\'s-style scale')
     .version('0.1.0', '-V, --version')
     .argument('<directory>', 'directory to scan')
     .option('-j, --json <path>', 'write JSON report to <path>')

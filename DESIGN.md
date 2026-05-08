@@ -1,6 +1,6 @@
-# `cscan` — Code Scanner CLI
+# Code Ratings — Code Scanner CLI
 
-A TypeScript-native CLI that walks a codebase, extracts metrics, surfaces quality issues, and emits structured reports.
+A TypeScript-native CLI (`code-ratings`) that walks a codebase, extracts metrics, surfaces quality issues, and emits structured reports.
 
 ## Goals
 
@@ -14,12 +14,12 @@ A TypeScript-native CLI that walks a codebase, extracts metrics, surfaces qualit
 - Polyglot deep analysis (Python/Go/Rust/etc. are counted, not analyzed).
 - A configuration file format. Thresholds are set via CLI flags.
 - Publishing to npm. The CLI runs locally via the `bin` entry.
-- Auto-fixing or refactoring. `cscan` reports; it does not modify code.
+- Auto-fixing or refactoring. Code Ratings reports; it does not modify code.
 
 ## CLI
 
 ```bash
-cscan <directory> [options]
+code-ratings <directory> [options]
 ```
 
 **Positional argument**
@@ -322,7 +322,7 @@ Implementation rules:
 
 These are deliberate omissions to keep MVP scope tight. Each can be added later without rearchitecting:
 
-- Configuration file (`.cscanrc.json`) — easy to layer on top of the existing CLI flag parsing.
+- Configuration file (`.code-ratingsrc.json`) — easy to layer on top of the existing CLI flag parsing.
 - Additional languages — the analyze stage is isolated; a Python analyzer could plug in alongside the TS/JS one.
 - HTML report output — another renderer over the same `Report` object.
 - Diff mode (compare two reports) — pure function over two `Report` objects.

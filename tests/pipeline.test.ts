@@ -8,7 +8,7 @@ import { DEFAULT_THRESHOLDS } from '../src/config/thresholds.js';
 describe('runPipeline', () => {
   let root: string;
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-pipe-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-pipe-'));
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });

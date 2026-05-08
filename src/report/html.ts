@@ -367,7 +367,7 @@ function renderHero(report: Report, tier: string): string {
             <div class="tier-sub">${tierBandLabel(tier)}</div>
           </div>
           <div>
-            <h1>cscan — Code Quality Rating</h1>
+            <h1>Code Ratings</h1>
             <p class="verdict">${escapeHtml(verdict)}</p>
             <p class="target">Scope: <code>${escapeHtml(report.meta.target)}</code></p>
           </div>
@@ -501,7 +501,7 @@ export function renderHtml(report: Report): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>cscan — Code Quality Scorecard · ${rating.overall.tier}</title>
+    <title>Code Ratings · ${rating.overall.tier}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
 ${STYLES}
@@ -509,7 +509,7 @@ ${STYLES}
   </head>
   <body>
     <div class="top">
-      <div class="brand">cscan · code-quality scorecard</div>
+      <div class="brand">Code Ratings · scorecard</div>
       <div class="actions">
         <button class="icon-btn" data-open="methodology">Methodology</button>
         <button class="icon-btn" data-open="glossary">Glossary</button>
@@ -524,7 +524,7 @@ ${cards}
       </div>
     </div>
     <footer class="bottom">
-      <div>cscan v${escapeHtml(report.meta.scannerVersion)} · scanned ${escapeHtml(report.meta.scannedAt.slice(0, 10))} · ${report.meta.durationMs} ms</div>
+      <div>Code Ratings v${escapeHtml(report.meta.scannerVersion)} · scanned ${escapeHtml(report.meta.scannedAt.slice(0, 10))} · ${report.meta.durationMs} ms</div>
       <div>Internal evaluation only · not investment advice</div>
     </footer>
     <div class="panel-backdrop" id="backdrop"></div>

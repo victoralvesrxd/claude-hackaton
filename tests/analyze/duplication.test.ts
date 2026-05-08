@@ -8,7 +8,7 @@ describe('runDuplicationScan', () => {
   let root: string;
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-dup-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-dup-'));
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });

@@ -4,7 +4,7 @@ coverage/
 *.log
 .DS_Store
 .vitest-cache/
-cscan-report.json
-cscan-report.md
+code-ratings-report.json
+code-ratings-report.md
 code-quality.html
 .claude/worktrees/

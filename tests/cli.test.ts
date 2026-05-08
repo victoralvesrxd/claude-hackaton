@@ -7,10 +7,10 @@ import { promisify } from 'node:util';
 
 const execFileP = promisify(execFile);
 
-describe('cscan CLI', () => {
+describe('Code Ratings CLI', () => {
   let root: string;
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'cscan-cli-'));
+    root = await mkdtemp(path.join(tmpdir(), 'code-ratings-cli-'));
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });

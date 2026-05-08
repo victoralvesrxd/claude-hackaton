@@ -81,7 +81,7 @@ describe('computeRating', () => {
     expect(r.overall.compositeDensity).toBe(0);
   });
 
-  it('rates the cscan dogfood snapshot as Baa2', () => {
+  it('rates the Code Ratings dogfood snapshot as Baa2', () => {
     const r = computeRating(baseReport);
     expect(r.overall.tier).toBe('Baa2');
     expect(r.overall.compositeDensity).toBeGreaterThan(2.5);
@@ -182,7 +182,7 @@ describe('renderHtml', () => {
 describe('writeHtmlReport', () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'cscan-html-'));
+    dir = await mkdtemp(path.join(tmpdir(), 'code-ratings-html-'));
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -193,6 +193,6 @@ describe('writeHtmlReport', () => {
     await writeHtmlReport(baseReport, out);
     const text = await readFile(out, 'utf8');
     expect(text).toContain('Baa2');
-    expect(text).toContain('cscan');
+    expect(text).toContain('Code Ratings');
   });
 });
